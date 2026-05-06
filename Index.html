@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Unic Elevators – Customer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=Noto+Sans+Telugu:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--r:#9B1111;--g:#F0A500;--n:#060d1f;--n2:#0d1628;--tx:#f0f4ff;--t2:#a8b4cf;--br:rgba(255,255,255,0.08);--blue:#4285F4;--green:#22c55e}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--n);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;overflow-x:hidden}
+.screen{display:none;padding:20px;min-height:100vh}
+.screen.active{display:block}
+header{padding:15px 20px;background:rgba(6,13,31,0.95);border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+.btn-back{background:var(--n2);border:1px solid var(--br);color:var(--tx);padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--g);letter-spacing:1px}
+.card{background:var(--n2);border:1px solid var(--br);border-radius:16px;padding:20px;margin-bottom:15px}
+.btn-main{width:100%;padding:16px;border-radius:12px;border:none;font-weight:700;cursor:pointer;margin-bottom:12px;font-size:16px;transition:.2s}
+.btn-primary{background:var(--r);color:white}
+.btn-outline{background:var(--n2);color:var(--tx);border:1px solid var(--br)}
+.btn-emergency{background:#fee2e2;color:#991b1b;border:2px solid #f87171}
+input,textarea,select{width:100%;padding:12px;background:var(--n);border:1px solid var(--br);border-radius:8px;color:white;margin-bottom:15px;font-size:16px;font-family:inherit}
+label{font-size:12px;color:var(--t2);display:block;margin-bottom:4px}
+.badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:bold;text-transform:uppercase}
+.st-pending{background:rgba(255,255,255,0.1);color:white}
+.st-assigned{background:rgba(66,133,244,0.2);color:var(--blue)}
+.st-reached{background:rgba(240,165,0,0.2);color:var(--g)}
+.st-completed{background:rgba(34,197,94,0.2);color:var(--green)}
+#loader{position:fixed;inset:0;background:rgba(6,13,31,0.9);display:none;align-items:center;justify-content:center;z-index:2000;flex-direction:column}
+.spinner{width:40px;height:40px;border:4px solid var(--g);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gps-msg{font-size:11px;text-align:center;margin-bottom:15px;font-weight:600;padding:5px;border-radius:4px}
+.gps-err{background:rgba(155,17,17,0.1);color:#ff6b6b}
+.gps-ok{background:rgba(34,197,94,0.1);color:var(--green)}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <p style="margin-top:15px;color:var(--g);letter-spacing:2px;font-size:10px" id="loader-msg">SAVING...</p>
+</div>
+
+<header id="main-header" style="display:none">
+  <button class="btn-back" id="back-btn" onclick="navBack()">← BACK</button>
+  <div class="logo">UNIC ELEVATORS</div>
+  <div style="width:60px"></div>
+</header>
+
+<!-- LANGUAGE -->
+<div id="scr-lang" class="screen active">
+  <div style="text-align:center;margin-top:80px">
+    <div style="font-size:60px;margin-bottom:16px">🛗</div>
+    <h1 style="font-size:36px;color:var(--g);font-family:'Barlow Condensed'">UNIC ELEVATORS</h1>
+    <p style="color:var(--t2);margin-bottom:8px;font-size:13px">Customer Portal</p>
+    <p style="margin-bottom:40px;color:var(--t2)">Choose Language / భాష ఎంచుకోండి</p>
+    <button class="btn-main btn-outline" onclick="setLang('en')">🇬🇧 ENGLISH</button>
+    <button class="btn-main btn-outline" style="font-family:'Noto Sans Telugu'" onclick="setLang('te')">🇮🇳 తెలుగు</button>
+  </div>
+</div>
+
+<!-- CUSTOMER MENU -->
+<div id="scr-customer-menu" class="screen">
+  <div style="text-align:center;margin-top:40px">
+    <div style="font-size:48px;margin-bottom:12px">👋</div>
+    <h2 id="txt-custMenu">Customer Portal</h2>
+    <p style="color:var(--t2);font-size:13px;margin-top:6px;margin-bottom:30px">How can we help you today?</p>
+    <button class="btn-main btn-primary" onclick="gotoScreen('scr-file-complaint')">📋 File a Complaint</button>
+    <button class="btn-main btn-outline" onclick="gotoScreen('scr-track-complaint')">🔍 Track My Complaint</button>
+  </div>
+</div>
+
+<!-- FILE COMPLAINT -->
+<div id="scr-file-complaint" class="screen">
+  <div class="card">
+    <h2 id="txt-formTitle">Service Selection</h2>
+    <p style="color:var(--t2);font-size:12px;margin-top:4px;margin-bottom:20px">Select the type of service you need</p>
+    <button class="btn-main btn-outline" onclick="openForm('installation')">🏗️ New Lift Installation</button>
+    <button class="btn-main btn-outline" onclick="openForm('service')">🔧 Monthly Service Request</button>
+    <button class="btn-main btn-emergency" onclick="openForm('emergency')">⚠️ EMERGENCY (Lift Stuck)</button>
+  </div>
+</div>
+
+<!-- DETAILS FORM -->
+<div id="scr-details-form" class="screen">
+  <div class="card">
+    <h2 id="disp-type-name" style="color:var(--g)">Details</h2>
+    <p style="color:var(--t2);font-size:12px;margin-top:4px;margin-bottom:20px">Fill in your details below</p>
+    <label>Full Name *</label>
+    <input type="text" id="inp-name" placeholder="Your full name">
+    <label>Mobile Number *</label>
+    <input type="tel" id="inp-phone" placeholder="10-digit mobile number">
+    <label>Address</label>
+    <textarea id="inp-addr" rows="3" placeholder="Building / area / landmark"></textarea>
+    <label>Remarks / Issue</label>
+    <textarea id="inp-issue" rows="2" placeholder="Describe the problem"></textarea>
+    <button id="btn-loc" class="btn-main btn-outline" onclick="getLocation()" style="color:var(--blue);border-color:var(--blue)">📍 Share My Location (GPS)</button>
+    <div id="loc-status" class="gps-msg" style="display:none"></div>
+    <button class="btn-main btn-primary" onclick="submitTicket()">✅ Submit Request</button>
+    <div id="submit-err" style="display:none;background:rgba(155,17,17,0.15);color:#ff6b6b;padding:12px;border-radius:8px;font-size:12px;margin-top:-8px;line-height:1.6"></div>
+  </div>
+</div>
+
+<!-- TRACK -->
+<div id="scr-track-complaint" class="screen">
+  <div class="card">
+    <h2 id="txt-trackTitle">Track Progress</h2>
+    <p style="color:var(--t2);font-size:12px;margin-top:4px;margin-bottom:16px">Enter your ticket ID or mobile number</p>
+    <input type="text" id="inp-track-val" placeholder="e.g. 54321 or 9876543210">
+    <button class="btn-main btn-primary" onclick="trackTicket()">🔍 Track Now</button>
+  </div>
+  <div id="track-result"></div>
+</div>
+
+<!-- SUCCESS -->
+<div id="scr-success" class="screen">
+  <div style="text-align:center;padding-top:60px">
+    <div style="font-size:64px;margin-bottom:10px">🎉</div>
+    <h2 style="color:var(--green)">REQUEST REGISTERED!</h2>
+    <div class="card" style="margin-top:30px">
+      <p style="font-size:12px;color:var(--t2)">YOUR TRACKING ID</p>
+      <h1 id="new-id" style="font-size:56px;color:var(--g);letter-spacing:4px">00000</h1>
+      <p style="font-size:12px;color:var(--t2);margin-top:8px">📸 Screenshot this ID to track your complaint later</p>
+      <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;margin-top:12px">
+        <p style="font-size:11px;color:var(--green)">☁️ Saved to cloud — our team will contact you shortly.</p>
+      </div>
+    </div>
+    <button class="btn-main btn-primary" style="margin-top:20px" onclick="gotoScreen('scr-customer-menu')">🏠 Back to Home</button>
+  </div>
+</div>
+
+<!-- Firebase Compat (works with normal script, no module issues) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey:            "AIzaSyA8Ge3WFWVJiLEoNJnmlStgThzA70eixAU",
+    authDomain:        "unic-elevators-2c01c.firebaseapp.com",
+    databaseURL:       "https://unic-elevators-2c01c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "unic-elevators-2c01c",
+    storageBucket:     "unic-elevators-2c01c.firebasestorage.app",
+    messagingSenderId: "1002807153207",
+    appId:             "1:1002807153207:web:a697e2ed1faa95d71165b2"
+  });
+
+  var db         = firebase.database();
+  var ticketsRef = db.ref('tickets');
+
+  /* STATE */
+  var LANG        = 'en';
+  var HISTORY     = ['scr-lang'];
+  var COORDS      = null;
+  var ACTIVE_TYPE = 'service';
+  var ALL_TICKETS = [];
+
+  /* TRANSLATIONS */
+  var T = {
+    en: { custMenu:"Customer Portal", formTitle:"Service Selection", trackTitle:"Track Complaint",
+          installation:"New Installation", service:"Monthly Service", emergency:"EMERGENCY" },
+    te: { custMenu:"కస్టమర్ పోర్టల్", formTitle:"సర్వీస్ ఎంపిక", trackTitle:"ట్రాకింగ్",
+          installation:"కొత్త ఇన్‌స్టాలేషన్", service:"నెలవారీ సర్వీస్", emergency:"అత్యవసర అభ్యర్థన" }
+  };
+
+  /* REAL-TIME LISTENER — keeps ALL_TICKETS fresh for tracking */
+  ticketsRef.on('value', function(snapshot) {
+    var data = snapshot.val() || {};
+    ALL_TICKETS = Object.entries(data).map(function(e) {
+      return Object.assign({}, e[1], { _key: e[0] });
+    });
+  });
+
+  /* ── NAVIGATION ── */
+  function setLang(l) {
+    LANG = l;
+    updateText();
+    gotoScreen('scr-customer-menu');
+  }
+
+  function gotoScreen(id) {
+    HISTORY.push(id);
+    renderScreen(id);
+  }
+
+  function navBack() {
+    if (HISTORY.length > 1) {
+      HISTORY.pop();
+      renderScreen(HISTORY[HISTORY.length - 1]);
+    }
+  }
+
+  function renderScreen(id) {
+    document.querySelectorAll('.screen').forEach(function(s) {
+      s.classList.remove('active');
+    });
+    document.getElementById(id).classList.add('active');
+    document.getElementById('main-header').style.display = (id === 'scr-lang') ? 'none' : 'flex';
+    window.scrollTo(0, 0);
+  }
+
+  /* ── FORM ── */
+  function openForm(type) {
+    ACTIVE_TYPE = type;
+    document.getElementById('disp-type-name').innerText = T[LANG][type];
+    document.getElementById('submit-err').style.display = 'none';
+    gotoScreen('scr-details-form');
+  }
+
+  /* ── GPS ── */
+  function getLocation() {
+    var s = document.getElementById('loc-status');
+    s.style.display = 'block';
+    s.className     = 'gps-msg';
+    s.innerText     = '📡 ACCESSING GPS...';
+    if (!navigator.geolocation) {
+      s.innerText = 'GPS not supported.';
+      s.className = 'gps-msg gps-err';
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        COORDS      = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        s.innerText = '✓ Location Captured (' + COORDS.lat.toFixed(4) + ', ' + COORDS.lng.toFixed(4) + ')';
+        s.className = 'gps-msg gps-ok';
+        document.getElementById('btn-loc').style.borderColor = 'var(--green)';
+      },
+      function() {
+        s.innerText = 'GPS Error — enable location & retry.';
+        s.className = 'gps-msg gps-err';
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
+  /* ── SUBMIT ── */
+  function submitTicket() {
+    var errBox = document.getElementById('submit-err');
+    errBox.style.display = 'none';
+    var n = document.getElementById('inp-name').value.trim();
+    var p = document.getElementById('inp-phone').value.trim();
+    if (!n || !p) {
+      errBox.style.display = 'block';
+      errBox.innerText     = '❌ Name and Phone are required.';
+      return;
+    }
+    toggleLoader(true, 'SAVING TO CLOUD...');
+    var id = Math.floor(10000 + Math.random() * 90000).toString();
+    var ticket = {
+      id: id, name: n, phone: p, type: ACTIVE_TYPE,
+      addr:    document.getElementById('inp-addr').value.trim(),
+      issue:   document.getElementById('inp-issue').value.trim(),
+      status:  'pending',
+      lat:     COORDS ? COORDS.lat : null,
+      lng:     COORDS ? COORDS.lng : null,
+      created: Date.now()
+    };
+    ticketsRef.push(ticket)
+      .then(function() {
+        document.getElementById('new-id').innerText = id;
+        clearInputs();
+        toggleLoader(false);
+        gotoScreen('scr-success');
+      })
+      .catch(function(e) {
+        toggleLoader(false);
+        errBox.style.display = 'block';
+        errBox.innerHTML = '❌ <b>Save Failed.</b> Error: ' + e.message;
+      });
+  }
+
+  /* ── TRACK ── */
+  function trackTicket() {
+    var val = document.getElementById('inp-track-val').value.trim().toLowerCase();
+    var res = document.getElementById('track-result');
+    if (!val) {
+      res.innerHTML = '<div class="card" style="color:#ff6b6b">Enter a ticket ID or phone number.</div>';
+      return;
+    }
+    var found = ALL_TICKETS.filter(function(t) {
+      return (t.id && t.id.toString() === val) || (t.phone && t.phone.includes(val));
+    });
+    if (!found.length) {
+      res.innerHTML = '<div class="card" style="text-align:center;color:var(--t2)">No ticket found for "<b>' + val + '</b>".</div>';
+      return;
+    }
+    found.sort(function(a, b) { return b.created - a.created; });
+    res.innerHTML = found.map(function(t) {
+      return '<div class="card" style="border-left:3px solid ' + statusColor(t.status) + '">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+          '<span style="font-size:11px;color:var(--t2)">ID: <b style="color:var(--g)">#' + t.id + '</b></span>' +
+          '<span class="badge st-' + t.status + '">' + t.status.toUpperCase() + '</span>' +
+        '</div>' +
+        '<div style="font-weight:700;font-size:15px">' + t.name + '</div>' +
+        '<div style="font-size:12px;color:var(--t2);margin:4px 0">' + t.phone + '</div>' +
+        (t.addr  ? '<div style="font-size:11px;color:var(--t2)">' + t.addr + '</div>' : '') +
+        (t.issue ? '<div style="font-size:11px;color:var(--t2);margin-top:4px;font-style:italic">"' + t.issue + '"</div>' : '') +
+        (t.assignedTo ? '<div style="font-size:11px;color:var(--t2);margin-top:6px">👷 Technician: <b style="color:white">' + t.assignedTo + '</b></div>' : '') +
+        '<div style="font-size:10px;color:var(--t2);margin-top:8px">' + new Date(t.created).toLocaleString() + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* ── HELPERS ── */
+  function statusColor(s) {
+    return ({ pending:'rgba(255,255,255,0.3)', assigned:'var(--blue)', reached:'var(--g)', completed:'var(--green)' })[s] || 'var(--br)';
+  }
+  function typeBadge(type) {
+    return ({ installation:'🏗 Install', service:'🔧 Service', emergency:'⚠️ Emergency' })[type] || type;
+  }
+  function toggleLoader(show, msg) {
+    document.getElementById('loader').style.display = show ? 'flex' : 'none';
+    if (msg) document.getElementById('loader-msg').innerText = msg;
+  }
+  function clearInputs() {
+    ['inp-name','inp-phone','inp-addr','inp-issue'].forEach(function(id) {
+      var e = document.getElementById(id); if (e) e.value = '';
+    });
+    COORDS = null;
+    var s = document.getElementById('loc-status'); if (s) s.style.display = 'none';
+    var b = document.getElementById('btn-loc');    if (b) b.style.borderColor = '';
+  }
+  function updateText() {
+    var t = T[LANG];
+    function s(id, v) { var e = document.getElementById(id); if (e) e.innerText = v; }
+    s('txt-custMenu',   t.custMenu);
+    s('txt-formTitle',  t.formTitle);
+    s('txt-trackTitle', t.trackTitle);
+  }
+</script>
+</body>
+</html>
