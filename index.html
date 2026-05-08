@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Unic Elevators – Staff Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--r:#9B1111;--g:#F0A500;--n:#060d1f;--n2:#0d1628;--tx:#f0f4ff;--t2:#a8b4cf;--br:rgba(255,255,255,0.08);--blue:#4285F4;--green:#22c55e}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--n);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;overflow-x:hidden}
+.screen{display:none;padding:20px;min-height:100vh}
+.screen.active{display:block}
+header{padding:15px 20px;background:rgba(6,13,31,0.95);border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+.btn-back{background:var(--n2);border:1px solid var(--br);color:var(--tx);padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--g);letter-spacing:1px}
+.card{background:var(--n2);border:1px solid var(--br);border-radius:16px;padding:20px;margin-bottom:15px}
+.btn-main{width:100%;padding:16px;border-radius:12px;border:none;font-weight:700;cursor:pointer;margin-bottom:12px;font-size:16px;transition:.2s}
+.btn-primary{background:var(--r);color:white}
+.btn-outline{background:var(--n2);color:var(--tx);border:1px solid var(--br)}
+input,textarea,select{width:100%;padding:12px;background:var(--n);border:1px solid var(--br);border-radius:8px;color:white;margin-bottom:15px;font-size:16px;font-family:inherit}
+select option{background:var(--n2)}
+label{font-size:12px;color:var(--t2);display:block;margin-bottom:4px}
+.badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:bold;text-transform:uppercase}
+.st-pending{background:rgba(255,255,255,0.1);color:white}
+.st-assigned{background:rgba(66,133,244,0.2);color:var(--blue)}
+.st-reached{background:rgba(240,165,0,0.2);color:var(--g)}
+.st-completed{background:rgba(34,197,94,0.2);color:var(--green)}
+#loader{position:fixed;inset:0;background:rgba(6,13,31,0.9);display:none;align-items:center;justify-content:center;z-index:2000;flex-direction:column}
+.spinner{width:40px;height:40px;border:4px solid var(--g);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Sync bar */
+.sync-bar{font-size:11px;text-align:center;padding:8px 10px;background:rgba(66,133,244,0.1);color:var(--blue);border-radius:8px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+.conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--blue)}
+.conn-dot.live{background:var(--green);animation:pulse 2s infinite}
+.conn-dot.err{background:#ff6b6b}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* Tabs */
+.tabs{display:flex;gap:8px;margin-bottom:15px}
+.tab{flex:1;padding:10px;border-radius:8px;border:1px solid var(--br);background:var(--n2);color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:.2s}
+.tab.active{background:var(--r);color:white;border-color:var(--r)}
+.tab-badge{display:inline-block;background:rgba(255,255,255,0.25);color:inherit;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px;font-weight:900}
+.tab.active .tab-badge{background:rgba(255,255,255,0.3)}
+/* Filter bar */
+.filter-bar{background:var(--n2);border:1px solid var(--br);border-radius:10px;padding:12px;margin-bottom:12px}
+.filter-bar label{font-size:11px;color:var(--t2);margin-bottom:4px}
+.filter-bar select,.filter-bar input{margin-bottom:0;padding:8px;font-size:13px}
+.filter-row{display:flex;gap:8px;align-items:flex-end}
+.filter-row>div{flex:1}
+.filter-row button{flex-shrink:0;padding:8px 14px;border-radius:8px;border:none;background:var(--blue);color:white;font-weight:700;font-size:12px;cursor:pointer;height:38px}
+.search-row{margin-top:10px}
+.search-row input{margin-bottom:0;padding:8px 10px;font-size:13px}
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--t2)}
+.empty .icon{font-size:40px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <p style="margin-top:15px;color:var(--g);letter-spacing:2px;font-size:10px" id="loader-msg">LOADING...</p>
+</div>
+
+<header id="main-header" style="display:none">
+  <button class="btn-back" id="back-btn" onclick="navBack()">← BACK</button>
+  <div class="logo">UNIC ELEVATORS</div>
+  <div style="width:60px"></div>
+</header>
+
+<!-- ROLE SELECTION -->
+<div id="scr-role" class="screen active">
+  <div style="text-align:center;margin-top:80px">
+    <h1 style="font-size:32px;color:var(--g);font-family:'Barlow Condensed';margin-bottom:8px">UNIC ELEVATORS</h1>
+    <p style="color:var(--t2);margin-bottom:40px;font-size:14px">Staff Portal</p>
+    <button class="btn-main btn-outline" onclick="openLogin('tech')">Technician Login</button>
+    <button class="btn-main btn-primary" onclick="openLogin('admin')">Admin Panel</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="scr-login" class="screen">
+  <div class="card" style="max-width:400px;margin:40px auto">
+    <h2 id="txt-login">Login</h2>
+    <div style="margin-top:20px">
+      <label>Your Name</label>
+      <input type="text" id="login-name" placeholder="Enter your full name">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Enter password">
+      <button class="btn-main btn-primary" onclick="handleLogin()">Login</button>
+      <p id="login-err" style="color:#ff6b6b;text-align:center;display:none;font-size:12px">Incorrect Password</p>
+    </div>
+  </div>
+</div>
+
+<!-- TECHNICIAN DASHBOARD -->
+<div id="scr-tech" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h3>My Assignments</h3>
+    <span id="tech-user-tag" style="font-size:12px;color:var(--g)"></span>
+  </div>
+  <div class="sync-bar" id="tech-sync-bar">
+    <span class="conn-dot" id="tech-dot"></span>
+    <span id="tech-sync-text">Loading tickets from cloud...</span>
+  </div>
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div>
+        <label>Show tickets from</label>
+        <select id="tech-filter-range" onchange="applyTechFilter()">
+          <option value="active">Active Only</option>
+          <option value="today">Today</option>
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="all">All Time</option>
+        </select>
+      </div>
+      <button onclick="forceReload('tech')">🔄 Refresh</button>
+    </div>
+    <div class="search-row">
+      <label>Search by name, ID or phone</label>
+      <input type="text" id="tech-search" placeholder="e.g. Ramesh, 99001, 9876543210" oninput="applyTechFilter()">
+    </div>
+  </div>
+  <div id="tech-list" style="margin-top:5px"></div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="scr-admin" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h3>Admin Control</h3>
+    <span id="admin-user-tag" style="font-size:12px;color:var(--g)"></span>
+  </div>
+  <div class="sync-bar" id="admin-sync-bar">
+    <span class="conn-dot" id="admin-dot"></span>
+    <span id="admin-sync-text">Loading tickets from cloud...</span>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="tab-active" onclick="switchAdminTab('active')">Active <span class="tab-badge" id="badge-active">0</span></div>
+    <div class="tab" id="tab-completed" onclick="switchAdminTab('completed')">Done <span class="tab-badge" id="badge-completed">0</span></div>
+    <div class="tab" id="tab-all" onclick="switchAdminTab('all')">All <span class="tab-badge" id="badge-all">0</span></div>
+  </div>
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div>
+        <label>Date range</label>
+        <select id="admin-filter-range" onchange="applyAdminFilter()">
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="all" selected>All Time</option>
+        </select>
+      </div>
+      <button onclick="forceReload('admin')">🔄 Refresh</button>
+    </div>
+    <div class="search-row">
+      <label>Search by name, ID or phone</label>
+      <input type="text" id="admin-search" placeholder="e.g. Ramesh, 99001, 9876543210" oninput="applyAdminFilter()">
+    </div>
+  </div>
+  <div id="admin-stats" style="display:flex;gap:8px;margin-bottom:12px"></div>
+  <div id="admin-list" style="margin-top:5px"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, off, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ── FIREBASE ──────────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyA8Ge3WFWVJiLEoNJnmlStgThzA70eixAU",
+  authDomain: "unic-elevators-2c01c.firebaseapp.com",
+  databaseURL: "https://unic-elevators-2c01c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "unic-elevators-2c01c",
+  storageBucket: "unic-elevators-2c01c.firebasestorage.app",
+  messagingSenderId: "1002807153207",
+  appId: "1:1002807153207:web:a697e2ed1faa95d71165b2"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const ticketsRef = ref(db, 'tickets');
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let HISTORY = ['scr-role'], LOGIN_ROLE = '', CURRENT_USER_NAME = '';
+let ALL_TICKETS = [], ADMIN_TAB = 'active', currentListener = null;
+const PROTECTED = ['scr-tech', 'scr-admin'];
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+window.navBack = () => {
+  const cur = HISTORY[HISTORY.length - 1];
+  if (PROTECTED.includes(cur)) {
+    if (currentListener) { off(ticketsRef, 'value', currentListener); currentListener = null; }
+    HISTORY = ['scr-role'];
+    renderScreen('scr-role');
+    return;
+  }
+  if (HISTORY.length > 1) {
+    HISTORY.pop();
+    renderScreen(HISTORY[HISTORY.length - 1]);
+  }
+};
+
+window.gotoScreen = id => { HISTORY.push(id); renderScreen(id); };
+
+window.renderScreen = id => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const hdr = document.getElementById('main-header');
+  const backBtn = document.getElementById('back-btn');
+  hdr.style.display = id === 'scr-role' ? 'none' : 'flex';
+  backBtn.textContent = PROTECTED.includes(id) ? '🚪 LOGOUT' : '← BACK';
+  if (id === 'scr-tech')  startListener('tech');
+  if (id === 'scr-admin') startListener('admin');
+  window.scrollTo(0, 0);
+};
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+window.openLogin = role => {
+  LOGIN_ROLE = role;
+  document.getElementById('login-err').style.display = 'none';
+  document.getElementById('login-name').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('txt-login').innerText = role === 'admin' ? 'Admin Login' : 'Technician Login';
+  gotoScreen('scr-login');
+};
+
+window.handleLogin = () => {
+  const n = document.getElementById('login-name').value.trim();
+  const p = document.getElementById('login-pass').value;
+  if (!n) { alert("Enter your name"); return; }
+  const ok = (LOGIN_ROLE === 'tech' && p === '1111') || (LOGIN_ROLE === 'admin' && p === '2222');
+  if (ok) {
+    CURRENT_USER_NAME = n;
+    document.getElementById(LOGIN_ROLE === 'tech' ? 'tech-user-tag' : 'admin-user-tag').innerText = "👤 " + n;
+    HISTORY = ['scr-role'];
+    gotoScreen('scr-' + LOGIN_ROLE);
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+};
+
+// Support Enter key on login
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
+
+// ── FIREBASE LISTENER ─────────────────────────────────────────────────────────
+function startListener(role) {
+  if (currentListener) { off(ticketsRef, 'value', currentListener); currentListener = null; }
+  const dot  = document.getElementById(role + '-dot');
+  const txt  = document.getElementById(role + '-sync-text');
+  dot.className = 'conn-dot';
+  txt.innerText = 'Connecting to cloud...';
+
+  currentListener = snap => {
+    ALL_TICKETS = [];
+    snap.forEach(child => ALL_TICKETS.push({ ...child.val(), fbKey: child.key }));
+    ALL_TICKETS.sort((a, b) => (b.created || 0) - (a.created || 0));
+    dot.className = 'conn-dot live';
+    txt.innerText = `Live — ${ALL_TICKETS.length} ticket${ALL_TICKETS.length !== 1 ? 's' : ''} loaded`;
+    if (role === 'tech')  applyTechFilter();
+    if (role === 'admin') { updateAdminBadges(); applyAdminFilter(); }
+  };
+
+  onValue(ticketsRef, currentListener, () => {
+    dot.className = 'conn-dot err';
+    txt.innerText = 'Connection error — check internet';
+  });
+}
+
+window.forceReload = role => {
+  if (currentListener) { off(ticketsRef, 'value', currentListener); currentListener = null; }
+  startListener(role);
+};
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function isToday(ts) {
+  if (!ts) return false;
+  return new Date(ts).toDateString() === new Date().toDateString();
+}
+function isWithinDays(ts, days) {
+  if (!ts) return false;
+  return Date.now() - ts < days * 86400000;
+}
+function fmtDate(ts) {
+  if (!ts) return 'N/A';
+  return new Date(ts).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+// ── TECH FILTER & RENDER ──────────────────────────────────────────────────────
+window.applyTechFilter = () => {
+  const range  = document.getElementById('tech-filter-range').value;
+  const search = document.getElementById('tech-search').value.toLowerCase().trim();
+
+  let filtered = ALL_TICKETS.filter(t => {
+    if (range === 'active') return ['pending','assigned','reached'].includes(t.status);
+    if (range === 'today')  return isToday(t.created);
+    if (range === '7')      return isWithinDays(t.created, 7);
+    if (range === '30')     return isWithinDays(t.created, 30);
+    return true;
+  });
+
+  if (search) filtered = filtered.filter(t =>
+    t.name?.toLowerCase().includes(search) ||
+    t.id?.includes(search) ||
+    t.phone?.includes(search)
+  );
+
+  const el = document.getElementById('tech-list');
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty"><div class="icon">📋</div><p>No tickets found</p></div>';
+    return;
+  }
+  el.innerHTML = filtered.map(renderTechCard).join('');
+};
+
+function renderTechCard(t) {
+  const mapLink = (t.lat && t.lng)
+    ? `<a href="https://maps.google.com/?q=${t.lat},${t.lng}" target="_blank" style="color:var(--blue);font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:3px">📍 View on Map</a>`
+    : '';
+  const canReach    = ['pending','assigned'].includes(t.status);
+  const canComplete = t.status === 'reached';
+  const isDone      = t.status === 'completed';
+
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-family:'Barlow Condensed';font-size:24px;color:var(--g)">#${t.id}</span>
+      <span class="badge st-${t.status}">${t.status.toUpperCase()}</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+      <span class="badge" style="background:rgba(155,17,17,0.2);color:var(--r)">${t.type.toUpperCase()}</span>
+      ${mapLink}
+    </div>
+    <p style="font-weight:700;font-size:15px">${t.name}</p>
+    <p style="color:var(--t2);font-size:13px;margin-top:2px">📞 ${t.phone}</p>
+    ${t.addr  ? `<p style="color:var(--t2);font-size:12px;margin-top:4px">🏠 ${t.addr}</p>` : ''}
+    ${t.issue ? `<p style="color:var(--t2);font-size:12px;margin-top:4px">💬 ${t.issue}</p>` : ''}
+    <p style="color:var(--t2);font-size:11px;margin-top:6px">🕐 ${fmtDate(t.created)}</p>
+    ${t.assignedTo ? `<p style="color:var(--blue);font-size:12px;margin-top:4px">👤 Assigned to: ${t.assignedTo}</p>` : ''}
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      ${canReach    ? `<button onclick="updateStatus('${t.fbKey}','reached')"   style="flex:1;padding:10px;border-radius:8px;border:none;background:rgba(240,165,0,0.2);color:var(--g);font-size:12px;font-weight:700;cursor:pointer">📍 Mark Reached</button>` : ''}
+      ${canComplete ? `<button onclick="updateStatus('${t.fbKey}','completed')" style="flex:1;padding:10px;border-radius:8px;border:none;background:rgba(34,197,94,0.2);color:var(--green);font-size:12px;font-weight:700;cursor:pointer">✅ Mark Completed</button>` : ''}
+      ${isDone      ? `<div style="flex:1;padding:10px;text-align:center;color:var(--green);font-size:12px;font-weight:700">✅ Work Completed</div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ── ADMIN FILTER & RENDER ─────────────────────────────────────────────────────
+window.switchAdminTab = tab => {
+  ADMIN_TAB = tab;
+  ['active','completed','all'].forEach(t =>
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab)
+  );
+  applyAdminFilter();
+};
+
+window.updateAdminBadges = () => {
+  const active    = ALL_TICKETS.filter(t => t.status !== 'completed').length;
+  const completed = ALL_TICKETS.filter(t => t.status === 'completed').length;
+  document.getElementById('badge-active').innerText    = active;
+  document.getElementById('badge-completed').innerText = completed;
+  document.getElementById('badge-all').innerText       = ALL_TICKETS.length;
+};
+
+window.applyAdminFilter = () => {
+  const range  = document.getElementById('admin-filter-range').value;
+  const search = document.getElementById('admin-search').value.toLowerCase().trim();
+
+  let filtered = ALL_TICKETS.filter(t => {
+    if (range === '7')  return isWithinDays(t.created, 7);
+    if (range === '30') return isWithinDays(t.created, 30);
+    return true;
+  });
+
+  if (ADMIN_TAB === 'active')    filtered = filtered.filter(t => t.status !== 'completed');
+  if (ADMIN_TAB === 'completed') filtered = filtered.filter(t => t.status === 'completed');
+
+  if (search) filtered = filtered.filter(t =>
+    t.name?.toLowerCase().includes(search) ||
+    t.id?.includes(search) ||
+    t.phone?.includes(search)
+  );
+
+  renderAdminStats(filtered);
+
+  const el = document.getElementById('admin-list');
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty"><div class="icon">📋</div><p>No tickets found</p></div>';
+    return;
+  }
+  el.innerHTML = filtered.map(renderAdminCard).join('');
+};
+
+function renderAdminStats(tickets) {
+  const c = { pending:0, assigned:0, reached:0, completed:0 };
+  tickets.forEach(t => { if (c[t.status] !== undefined) c[t.status]++; });
+  document.getElementById('admin-stats').innerHTML = [
+    { label:'Pending',  count:c.pending,   bg:'rgba(255,255,255,0.06)', fg:'white'       },
+    { label:'Assigned', count:c.assigned,  bg:'rgba(66,133,244,0.15)', fg:'var(--blue)'  },
+    { label:'Reached',  count:c.reached,   bg:'rgba(240,165,0,0.15)',  fg:'var(--g)'     },
+    { label:'Done',     count:c.completed, bg:'rgba(34,197,94,0.15)',  fg:'var(--green)' }
+  ].map(i => `
+    <div style="flex:1;background:${i.bg};border:1px solid var(--br);border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:24px;font-weight:900;color:${i.fg};font-family:'Barlow Condensed'">${i.count}</div>
+      <div style="font-size:10px;color:var(--t2);margin-top:2px">${i.label}</div>
+    </div>`).join('');
+}
+
+function renderAdminCard(t) {
+  const mapLink = (t.lat && t.lng)
+    ? `<a href="https://maps.google.com/?q=${t.lat},${t.lng}" target="_blank" style="color:var(--blue);font-size:11px;text-decoration:none">📍 View on Map</a>`
+    : '';
+  const statusOpts = ['pending','assigned','reached','completed'].map(s =>
+    `<option value="${s}" ${t.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+  ).join('');
+
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-family:'Barlow Condensed';font-size:24px;color:var(--g)">#${t.id}</span>
+      <span class="badge st-${t.status}">${t.status.toUpperCase()}</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+      <span class="badge" style="background:rgba(155,17,17,0.2);color:var(--r)">${t.type.toUpperCase()}</span>
+      ${mapLink}
+    </div>
+    <p style="font-weight:700;font-size:15px">${t.name}</p>
+    <p style="color:var(--t2);font-size:13px;margin-top:2px">📞 ${t.phone}</p>
+    ${t.addr  ? `<p style="color:var(--t2);font-size:12px;margin-top:4px">🏠 ${t.addr}</p>` : ''}
+    ${t.issue ? `<p style="color:var(--t2);font-size:12px;margin-top:4px">💬 ${t.issue}</p>` : ''}
+    <p style="color:var(--t2);font-size:11px;margin-top:6px">🕐 ${fmtDate(t.created)}</p>
+    ${t.assignedTo ? `<p style="color:var(--blue);font-size:12px;margin-top:4px">👤 ${t.assignedTo}</p>` : ''}
+
+    <!-- Assign Technician -->
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--br)">
+      <label style="font-size:11px;color:var(--t2);margin-bottom:6px">Assign to Technician</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="assign-${t.fbKey}" value="${t.assignedTo||''}" placeholder="Technician name" style="flex:1;margin-bottom:0;padding:8px;font-size:13px">
+        <button onclick="assignTicket('${t.fbKey}')" style="padding:8px 14px;border-radius:8px;border:none;background:var(--blue);color:white;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;height:38px">Assign</button>
+      </div>
+    </div>
+
+    <!-- Status + Delete -->
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+      <div style="flex:1">
+        <label style="font-size:11px;color:var(--t2);margin-bottom:4px">Update Status</label>
+        <select onchange="updateStatus('${t.fbKey}',this.value)" style="margin-bottom:0;padding:8px;font-size:13px">${statusOpts}</select>
+      </div>
+      <button onclick="deleteTicket('${t.fbKey}','${t.id}')" style="padding:8px 12px;border-radius:8px;border:none;background:rgba(155,17,17,0.25);color:#ff6b6b;font-size:18px;cursor:pointer;margin-top:16px;height:38px" title="Delete Ticket">🗑</button>
+    </div>
+  </div>`;
+}
+
+// ── TICKET ACTIONS ────────────────────────────────────────────────────────────
+window.updateStatus = (fbKey, status) => {
+  update(ref(db, 'tickets/' + fbKey), { status }).catch(() => alert('Update failed. Check internet.'));
+};
+
+window.assignTicket = fbKey => {
+  const val = document.getElementById('assign-' + fbKey)?.value.trim();
+  if (!val) { alert('Enter a technician name to assign.'); return; }
+  update(ref(db, 'tickets/' + fbKey), { assignedTo: val, status: 'assigned' })
+    .catch(() => alert('Assignment failed. Check internet.'));
+};
+
+window.deleteTicket = (fbKey, id) => {
+  if (!confirm(`Delete ticket #${id}?\n\nThis action cannot be undone.`)) return;
+  remove(ref(db, 'tickets/' + fbKey)).catch(() => alert('Delete failed. Check internet.'));
+};
+</script>
+</body>
+</html>
